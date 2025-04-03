@@ -55,6 +55,12 @@ These are the Azure resources that are deployed with this template:
 - **Log Analytics** and **Application Insights** - Logging for the Container Apps Environment
 - **Container Registry** - Used to deploy the custom Docker container for the app
 
+## Resource Links
+
+Here are some additional resource links that help explain the topics around building custom MCP Servers in TypeScript and about what MCP and SSE are:
+
+- [How to Build and Deploy an MCP Server with TypeScript and Azure Developer CLI (azd) using Azure Container Apps and Docker](https://build5nines.com/how-to-build-and-deploy-an-mcp-server-with-typescript-and-azure-developer-cli-azd-using-azure-container-apps-and-docker/) by Chris Pietschmann
+
 ## Author
 
 This `azd` template was written by [Chris Pietschmann](https://pietschsoft.com), founder of [Powergentic.ai](https://powergentic.ai), Microsoft MVP, HashiCorp Ambassador, and Microsoft Certified Trainer (MCT).
