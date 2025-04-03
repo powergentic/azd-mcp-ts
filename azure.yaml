@@ -1,0 +1,25 @@
+name: mcpserver
+metadata:
+  subscription: ${AZURE_SUBSCRIPTION_ID}
+  location: ${AZURE_LOCATION}
+  resource_group: ${AZURE_RESOURCE_GROUP}
+
+infra:
+  bicep: ./infra/main.bicep
+  parameters:
+    - name: containerMinReplicaCount
+      value: 1
+    - name: containerMaxReplicaCount
+      value: 1
+
+services:
+  mcpserver:
+    project: ./src/mcpserver
+    host: containerapp
+    language: js
+    docker:
+      context: ./
+      path: DOCKERFILE
+    resources:
+      cpu: 0.5
+      memory: 1Gi
