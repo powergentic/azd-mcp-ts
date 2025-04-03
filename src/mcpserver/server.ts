@@ -19,12 +19,15 @@ const server = new McpServer({
   version: "1.0.0"
 });
 
+
 // ##################################################
 // ... set up server resources, tools, and prompts ...
 
 server.resource(
   "echo",
-  new ResourceTemplate("echo://{message}", { list: undefined }),
+  new ResourceTemplate("echo://{message}", {
+    list: undefined,
+  }),
   async (uri, { message }) => ({
     contents: [{
       uri: uri.href,
@@ -69,7 +72,12 @@ app.get("/sse", async (_: Request, res: Response) => {
   res.on("close", () => {
     delete transports[transport.sessionId];
   });
-  await server.connect(transport);
+  try {
+    await server.connect(transport);
+  } catch (error: any) {
+    console.error("Error connecting transport:", error);
+    res.status(500).send("Error connecting transport");
+  }
 });
 
 app.post("/messages", async (req: Request, res: Response) => {
@@ -78,6 +86,7 @@ app.post("/messages", async (req: Request, res: Response) => {
   if (transport) {
     await transport.handlePostMessage(req, res);
   } else {
+    console.error("No transport found for sessionId:", sessionId);
     res.status(400).send('No transport found for sessionId');
   }
 });
@@ -88,6 +97,7 @@ app.post("/message", async (req: Request, res: Response) => {
   if (transport) {
     await transport.handlePostMessage(req, res);
   } else {
+    console.error("No transport found for sessionId:", sessionId);
     res.status(400).send('No transport found for sessionId');
   }
 });
