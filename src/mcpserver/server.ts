@@ -63,7 +63,6 @@ const app = express();
 // sessionId to transport
 const transports: {[sessionId: string]: SSEServerTransport} = {};
 
-
 app.get("/sse", async (_: Request, res: Response) => {
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
@@ -82,6 +81,17 @@ app.post("/messages", async (req: Request, res: Response) => {
     res.status(400).send('No transport found for sessionId');
   }
 });
+
+app.post("/message", async (req: Request, res: Response) => {
+  const sessionId = req.query.sessionId as string;
+  const transport = transports[sessionId];
+  if (transport) {
+    await transport.handlePostMessage(req, res);
+  } else {
+    res.status(400).send('No transport found for sessionId');
+  }
+});
+
 
 app.listen(PORT);
 console.log(`Server started on http://localhost:${PORT}  🚀`);
