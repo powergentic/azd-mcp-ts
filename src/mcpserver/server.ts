@@ -14,15 +14,18 @@ import { z } from "zod";
 
 const PORT = process.env.PORT || 3001;
 
+// ##################################################
+// This is a simple example of how to set up an SSE server using the Model Context Protocol (MCP) SDK.
+
+// ✅ Define the server
+// The server name and version are used to identify the server in the MCP protocol.
 const server = new McpServer({
   name: "example-server",
   version: "1.0.0"
 });
 
 
-// ##################################################
-// ... set up server resources, tools, and prompts ...
-
+// ✅ Define the Resources
 server.resource(
   "echo",
   new ResourceTemplate("echo://{message}", {
@@ -36,6 +39,7 @@ server.resource(
   })
 );
 
+// ✅ Define the Tools
 server.tool(
   "echo",
   { message: z.string() },
@@ -44,6 +48,7 @@ server.tool(
   })
 );
 
+// ✅ Define the Prompts
 server.prompt(
   "echo",
   { message: z.string() },
