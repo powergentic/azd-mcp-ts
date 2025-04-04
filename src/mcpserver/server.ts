@@ -31,6 +31,9 @@ server.resource(
   new ResourceTemplate("echo://{message}", {
     list: undefined,
   }),
+  {
+    description: "Echoes the message back to the user."
+  },
   async (uri, { message }) => ({
     contents: [{
       uri: uri.href,
@@ -42,6 +45,7 @@ server.resource(
 // ✅ Define the Tools
 server.tool(
   "echo",
+  "Echoes the message back to the user.",
   { message: z.string() },
   async ({ message }) => ({
     content: [{ type: "text", text: `Tool echo: ${message}` }]
@@ -51,6 +55,7 @@ server.tool(
 // ✅ Define the Prompts
 server.prompt(
   "echo",
+  "Echoes the message back to the user.",
   { message: z.string() },
   ({ message }) => ({
     messages: [{
