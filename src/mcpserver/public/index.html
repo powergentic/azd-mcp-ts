@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MCP Server Test UI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body { margin: 20px; }
+    .output { white-space: pre-wrap; background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">MCP Server: <span id="server-name" class="mb-4">Loading...</span></h1>
+
+    <div id="controls" class="mb-4">
+      <h2>Available Actions</h2>
+      <p>Below are the available actions your custom MCP server is programmed for. This page is a really simple MCP Client and uses SSE to inspect the MCP Server itself to report the available actions.</p>
+      <div>
+        <h4>Tools</h4>
+        <ul id="tools-list" class="list-group mb-3"></ul>
+      </div>
+      <div>
+        <h4>Prompts</h4>
+        <ul id="prompts-list" class="list-group mb-3"></ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul id="resources-list" class="list-group mb-3"></ul>
+      </div>
+      <div>
+        <h4>Templates</h4>
+        <ul id="templates-list" class="list-group mb-3"></ul>
+      </div>
+    </div>
+
+    <div class="mb-4">
+        <h3>Helpful Resources:</h3>
+        <ul>
+            <li><a href="https://github.com/powergentic/azd-mcp-ts">Powergentic <code>azd-mcp-ts</code> MCP Server template</a></li>
+            <li><a href="https://modelcontextprotocol.io">Model Context Protocol Documentation</a></li>
+            <li><a href="https://github.com/modelcontextprotocol/typescript-sdk">The official Typescript SDK for Model Context Protocol servers and clients</a></li>
+        </ul>
+    </div>
+
+    <!-- <div class="mb-4">
+      <h2>Run Action</h2>
+      <form id="action-form">
+        <div class="mb-3">
+          <label for="action-type">Action Type</label>
+          <select id="action-type" class="form-select">
+            <option value="tool">Tool</option>
+            <option value="prompt">Prompt</option>
+            <option value="resource">Resource</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="action-name">Action Name</label>
+          <input id="action-name" class="form-control" placeholder="Enter action name" />
+        </div>
+        <div class="mb-3">
+          <label for="action-params">Parameters (JSON)</label>
+          <textarea id="action-params" class="form-control" rows="4" placeholder='{ "arg": "value" }'></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="runAction()">Run</button>
+      </form>
+    </div> -->
+
+    <div id="output" class="output" style="display: none"></div>
+  </div>
+
+  <script>
+    let sessionId = null;
+    let messageEndpoint = '/messages';
+    let msgCounter = 0;
+
+    const sse = new EventSource('/sse');
+
+    sse.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      console.log("onmessage", data);
+      
+      if (data.id === 'init')
+      {
+        document.getElementById('server-name').innerText = `${data.result.serverInfo.name} (v${data.result.serverInfo.version})`;
+      } else if (data.id === 'msg-listtools') {
+        populateList('tools-list', data.result.tools);
+      } else if (data.id === 'msg-listprompts') {
+        populateList('prompts-list', data.result.prompts);
+      } else if (data.id === 'msg-listresources') {
+        populateList('resources-list', data.result.resources);
+      } else if (data.id === 'msg-listtemplates') {
+        populateList('templates-list', data.result.templates);
+      }
+
+      displayOutput({ event: 'onmessage', data: data });
+    };
+
+    sse.addEventListener('endpoint', (event) => {
+        messageEndpoint = event.data;
+        displayOutput({ event: 'endpoint', data: messageEndpoint });
+
+        sendMessage('init', 'initialize', {
+          protocolVersion: '2024-11-05',
+          clientInfo: {
+            name: "my-mcp-client",
+            version: "0.0.1"
+          },
+          capabilities: { sampling: {}, roots: { listChanged: true } }
+        });
+
+        sendMessage('msg-listtools', 'tools/list', {});
+        sendMessage('msg-listprompts', 'prompts/list', {});
+        sendMessage('mst-listresources', 'resources/list', {});
+        sendMessage('mst-listtemplates', 'resources/templates/list', {});
+    });
+
+
+    sse.addEventListener('open', (e) => {
+      // Wait for a moment to ensure session is set
+
+    });
+
+    sse.onerror = (e) => {
+      displayOutput({ event: 'error', error: 'SSE connection failed' });
+    };
+
+    function populateList(id, items) {
+      const ul = document.getElementById(id);
+      ul.innerHTML = '';
+      for (const item of items) {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = typeof item === 'string' ? item : item.name || JSON.stringify(item);
+        ul.appendChild(li);
+      }
+    }
+
+    function displayOutput(data) {
+      const el = document.getElementById('output');
+      el.innerText += `\n${JSON.stringify(data, null, 2)}`;
+    }
+
+    async function sendMessage(id, method, params) {
+      const payload = { id, method, params, jsonrpc: '2.0' };
+
+      try {
+        const res = await fetch(`${messageEndpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        displayOutput({ event: 'sent', payload });
+      } catch (err) {
+        displayOutput({ event: 'error', error: err.message });
+      }
+    }
+
+    function runAction() {
+      const type = document.getElementById('action-type').value;
+      const name = document.getElementById('action-name').value;
+      const rawParams = document.getElementById('action-params').value;
+
+      let method = { tool: 'callTool', prompt: 'getPrompt', resource: 'readResource' }[type];
+      let params;
+
+      try {
+        params = type === 'resource'
+          ? { uri: name }
+          : { name, arguments: rawParams ? JSON.parse(rawParams) : {} };
+      } catch (e) {
+        return displayOutput({ event: 'error', error: 'Invalid JSON in parameters' });
+      }
+
+      sendMessage(method, params);
+    }
+  </script>
+</body>
+</html>

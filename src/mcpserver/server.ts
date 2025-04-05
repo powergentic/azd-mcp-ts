@@ -72,6 +72,9 @@ server.prompt(
 // Create an Express server
 const app = express();
 
+// Add middleware to serve static files from the 'public' directory
+app.use(express.static("public"));
+
 // to support multiple simultaneous connections we have a lookup object from
 // sessionId to transport
 const transports: {[sessionId: string]: SSEServerTransport} = {};
