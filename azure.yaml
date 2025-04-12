@@ -6,11 +6,6 @@ metadata:
 
 infra:
   bicep: ./infra/main.bicep
-  parameters:
-    - name: containerMinReplicaCount
-      value: 1
-    - name: containerMaxReplicaCount
-      value: 1
 
 services:
   mcpserver:

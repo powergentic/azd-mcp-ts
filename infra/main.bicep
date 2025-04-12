@@ -16,10 +16,10 @@ param resourceGroupName string
 param containerPort int = 80
 
 @description('Minimum replica count for app containers.')
-param containerMinReplicaCount int = 2
+param containerMinReplicaCount int = 1
 
 @description('Maximum replica count for app containers.')
-param containerMaxReplicaCount int = 3
+param containerMaxReplicaCount int = 1
 
 param mcpserverContainerAppExists bool
 
